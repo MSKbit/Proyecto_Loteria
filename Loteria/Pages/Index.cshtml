@@ -1,0 +1,68 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Lotería</h1>
+    <p>Generador de Tarjetas</p>
+    <input id="numTarjetas" min="1" placeholder="Número de tarjetas" type="number" />
+    @Html.AntiForgeryToken()
+    <button type="button" id="callAjax">Crear tarjetas</button>
+    @section Scripts
+        {
+        <script type="text/javascript">
+            $("#callAjax").click(function () {
+                try {
+                    const totalTarjetas = Math.abs(parseInt(document.getElementById('numTarjetas').value));
+                    if (isNaN(totalTarjetas)) {
+                        alert('Ingresa un número válido.');
+                        return;
+                    }
+                    const elementos = { totalTarjetas };
+                    $.ajax({
+                        type: "POST",
+                        url: "/Index?handler=GetAjax",
+                        data: elementos,
+                        contentType: 'application/x-www-form-urlencoded',
+                        dataType: "json",
+                        headers:
+                        {
+                            "RequestVerificationToken": $('input:hidden[name="__RequestVerificationToken"]').val()
+                        },
+                        success: function (msg) {
+                            console.log(msg);
+
+                            const resultados = JSON.parse(msg).resultado;
+                            console.log(resultados)
+                            let filas = ``;
+                            for (let index = 0; index < resultados.length; index++) {
+                                const element = resultados[index];
+                                filas += `<tr>
+                                            <td>${element.idTarjeta}</td>
+                                            <td>${element.nameTarjeta}</td>
+                                          </tr>`
+                            }
+                            let html = `<table class="table table-hover">
+                              <thead class="thead-dark">
+                                <th>No. Tarjeta</th>
+                                <th>Cartas</th>
+                              </thead>
+                              ${filas}
+                            </table>`
+                            document.getElementById('resultado').innerHTML = html;
+
+                        }
+                    });
+                }
+                catch (e) {
+                    throw new Error('La cantidad debe ser numérica');
+                }
+
+            });
+        </script>
+    }
+    <br />
+    <span id="resultado"></span>
+</div>
